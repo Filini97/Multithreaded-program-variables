@@ -1,5 +1,6 @@
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Main {
@@ -7,9 +8,13 @@ public class Main {
     public static AtomicInteger four = new AtomicInteger(0);
     public static AtomicInteger five = new AtomicInteger(0);
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         Random random = new Random();
         String[] texts = new String[100_000];
+        AtomicBoolean a = new AtomicBoolean(false);
+        AtomicBoolean b = new AtomicBoolean(false);
+        AtomicBoolean c = new AtomicBoolean(false);
+
         for (int i = 0; i < texts.length; i++) {
             texts[i] = generateText("abc", 3 + random.nextInt(3));
         }
@@ -18,44 +23,49 @@ public class Main {
             for (String nickName : texts) {
                 if (nickName.length() == 3 && palindromeCheck(nickName)) {
                     three.getAndIncrement();
-                } if (nickName.length() == 4 && palindromeCheck(nickName)) {
+                } else if (nickName.length() == 4 && palindromeCheck(nickName)) {
                     four.getAndIncrement();
-                } if (nickName.length() == 5 && palindromeCheck(nickName)) {
+                } else if (nickName.length() == 5 && palindromeCheck(nickName)) {
                     five.getAndIncrement();
                 }
             }
+            a.set(true);
         }).start();
 
         new Thread(() -> {
             for (String nickName : texts) {
                 if (nickName.length() == 3 && sameLettersCheck(nickName)) {
                     three.getAndIncrement();
-                } if (nickName.length() == 4 && sameLettersCheck(nickName)) {
+                } else if (nickName.length() == 4 && sameLettersCheck(nickName)) {
                     four.getAndIncrement();
-                } if (nickName.length() == 5 && sameLettersCheck(nickName)) {
+                } else if (nickName.length() == 5 && sameLettersCheck(nickName)) {
                     five.getAndIncrement();
                 }
             }
+            b.set(true);
         }).start();
 
         new Thread(() -> {
             for (String nickName : texts) {
                 if (nickName.length() == 3 && ascendingCheck(nickName)) {
                     three.getAndIncrement();
-                } if (nickName.length() == 4 && ascendingCheck(nickName)) {
+                } else if (nickName.length() == 4 && ascendingCheck(nickName)) {
                     four.getAndIncrement();
-                } if (nickName.length() == 5 && ascendingCheck(nickName)) {
+                } else if (nickName.length() == 5 && ascendingCheck(nickName)) {
                     five.getAndIncrement();
                 }
             }
+            c.set(true);
         }).start();
 
+        while (!a.get() || !b.get() || !c.get()) {
+            TimeUnit.MILLISECONDS.sleep(500);
+        }
 
         System.out.println("Красивых слов с длиной 3: " + three + " шт" + "\n" +
-        "Красивых слов с длиной 4: " + four + " шт" + "\n" +
-        "Красивых слов с длиной 5: " + five + " шт");
+                "Красивых слов с длиной 4: " + four + " шт" + "\n" +
+                "Красивых слов с длиной 5: " + five + " шт");
     }
-
 
 
     public static boolean palindromeCheck (String nickname) {
