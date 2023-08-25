@@ -11,15 +11,12 @@ public class Main {
     public static void main(String[] args) throws InterruptedException {
         Random random = new Random();
         String[] texts = new String[100_000];
-        AtomicBoolean a = new AtomicBoolean(false);
-        AtomicBoolean b = new AtomicBoolean(false);
-        AtomicBoolean c = new AtomicBoolean(false);
 
         for (int i = 0; i < texts.length; i++) {
             texts[i] = generateText("abc", 3 + random.nextInt(3));
         }
 
-        new Thread(() -> {
+        Thread palindrome = new Thread(() -> {
             for (String nickName : texts) {
                 if (nickName.length() == 3 && palindromeCheck(nickName)) {
                     three.getAndIncrement();
@@ -29,10 +26,10 @@ public class Main {
                     five.getAndIncrement();
                 }
             }
-            a.set(true);
-        }).start();
+        });
+        palindrome.start();
 
-        new Thread(() -> {
+        Thread sameLetterCheck = new Thread(() -> {
             for (String nickName : texts) {
                 if (nickName.length() == 3 && sameLettersCheck(nickName)) {
                     three.getAndIncrement();
@@ -42,10 +39,10 @@ public class Main {
                     five.getAndIncrement();
                 }
             }
-            b.set(true);
-        }).start();
+        });
+        sameLetterCheck.start();
 
-        new Thread(() -> {
+        Thread ascending = new Thread(() -> {
             for (String nickName : texts) {
                 if (nickName.length() == 3 && ascendingCheck(nickName)) {
                     three.getAndIncrement();
@@ -55,18 +52,17 @@ public class Main {
                     five.getAndIncrement();
                 }
             }
-            c.set(true);
-        }).start();
+        });
+        ascending.start();
 
-        while (!a.get() || !b.get() || !c.get()) {
-            TimeUnit.MILLISECONDS.sleep(500);
-        }
+        palindrome.join();
+        sameLetterCheck.join();
+        ascending.join();
 
         System.out.println("Красивых слов с длиной 3: " + three + " шт" + "\n" +
                 "Красивых слов с длиной 4: " + four + " шт" + "\n" +
                 "Красивых слов с длиной 5: " + five + " шт");
     }
-
 
     public static boolean palindromeCheck (String nickname) {
         String clean = nickname.replaceAll("\\s+", "").toLowerCase();
